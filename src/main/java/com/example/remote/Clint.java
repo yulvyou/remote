@@ -172,7 +172,7 @@ public class Clint {
             //通知服务器
             executeCommand.noticeServer("schoolId");
         }else {
-            log.error("");
+            log.error("执行id为 {} 的命令失败",commandJson.getString("commandID"));
             return;
         }
 
