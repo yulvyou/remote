@@ -3,26 +3,32 @@ package com.example.remote;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.example.remote.constants.RConstant;
-import com.example.remote.factory.CommandFactory;
+import com.example.remote.factory.ThreadPoolFactory;
 import com.example.remote.interf.ExecuteCommand;
+import com.example.remote.interfimpl.ExecuteUpdateCommand;
 import com.example.remote.utils.FileUtil;
 import com.example.remote.utils.IpConfigUtils;
+import com.example.remote.utils.ThreadPoolUtils;
 import com.example.remote.utils.WebUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+
+import java.util.concurrent.*;
 
 /**
  * 客户端
  */
 @Slf4j
+@Component
 @Configuration
 @EnableScheduling
 public class Clint {
 
     int version = 1;
-    @Scheduled(fixedRate = 5000)
+    @Scheduled(fixedDelay = 5000)
     public void run() {
 
         log.info("定时任务run方法");
@@ -34,38 +40,41 @@ public class Clint {
             fixconfigFile();
         }
 
-        String schoolId = FileUtil.getKeyFromJsonFile(RConstant.TEST_CONFIGFILE_PATH,"schoolID");
-        String clientNo = FileUtil.getKeyFromJsonFile(RConstant.TEST_CONFIGFILE_PATH,"clientNo");
-//        String version = FileUtil.getKeyFromJsonFile(RConstant.TEST_CONFIGFILE_PATH,"version");
-        String plugins = FileUtil.getKeyFromJsonFile(RConstant.TEST_CONFIGFILE_PATH,"plugins");
+        String schoolId = FileUtil.getKeyFromJsonFile(RConstant.TEST_CURRENT_CONFIGFILE_PATH,"schoolID");
+        String clientNo = FileUtil.getKeyFromJsonFile(RConstant.TEST_CURRENT_CONFIGFILE_PATH,"clientNo");
+//        String version = FileUtil.getKeyFromJsonFile(RConstant.TEST_CURRENT_CONFIGFILE_PATH,"version");
+        String plugins = FileUtil.getKeyFromJsonFile(RConstant.TEST_CURRENT_CONFIGFILE_PATH,"plugins");
         String macAddr = IpConfigUtils.getMACAddress();
+
+
         //TODO 向服务端请求本客户端需要执行的命令(要改参数)
-        String Command = requestCommandsFromServer(schoolId,clientNo, String.valueOf(version),macAddr,plugins);
-        log.info("Command{}: {}",version,Command);
+        String Command = null;
+        try {
+            Command = requestCommandsFromServer(schoolId,clientNo, String.valueOf(version),macAddr,plugins);
+            if(Command == null && Command.equals(""))
+                return;
+
+        }catch (Exception e){
+            log.error("访问服务器失败,原因：{}",e);
+            return;
+        }
 
         //TODO
         version ++;
+        log.info("Command{}: {}",version,Command);
 
-        executeCommand(Command);
-
-//        //执行相关命令
-//        Future<?> future = ThreadPoolFactory.getNormalPool().submit(new Runnable() {
-//            @Override
-//            public void run() {
-//                executeCommand(Command);
-//            }
-//        });
-//
-//        try {
-//            future.get(5,TimeUnit.SECONDS);
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        } catch (ExecutionException e) {
-//            e.printStackTrace();
-//        } catch (TimeoutException e) {
-//            e.printStackTrace();
-//        }
-
+        //执行命令
+        ExecutorService executor = ThreadPoolFactory.getNormalPool();
+        String finalCommand = Command;
+        Future<Boolean> future = executor.submit(new Callable<Boolean>() {
+            @Override
+            public Boolean call() throws Exception {
+                return executeCommand(finalCommand);
+            }
+        });
+        int j = ((ThreadPoolExecutor)executor).getActiveCount();
+        log.info(j + "");
+        ThreadPoolUtils.monitorTask(future,5);
 
     }//run
 
@@ -77,7 +86,7 @@ public class Clint {
     public Boolean isFirstLunch() {
         try {
 
-            String isFirstLaunch = FileUtil.getKeyFromJsonFile(RConstant.TEST_CONFIGFILE_PATH,"isFirstLaunch");
+            String isFirstLaunch = FileUtil.getKeyFromJsonFile(RConstant.TEST_UPDATE_CONFIGFILE_PATH,"isFirstLaunch");
             if (isFirstLaunch.equals("true")){
                 return true;
             }else
@@ -85,10 +94,8 @@ public class Clint {
 
         } catch (Exception e) {
             log.error("读取R程序的配置文件失败,原因：{}",e);
-            e.printStackTrace();
+            return false;
         }
-
-        return true;
     }
 
     /**
@@ -96,15 +103,15 @@ public class Clint {
      */
     public void fixconfigFile() {
         try {
-            String configJson = FileUtil.readJsonFromFile(RConstant.TEST_CONFIGFILE_PATH);
+            String configJson = FileUtil.readJsonFromFile(RConstant.TEST_UPDATE_CONFIGFILE_PATH);
             JSONObject config = new JSONObject();
             config = JSON.parseObject(configJson);
 
             config.replace("isFirstLaunch",false);
-            FileUtil.writeJsonToFile(RConstant.TEST_CONFIGFILE_PATH,config.toString());
+            FileUtil.writeJsonToFile(RConstant.TEST_UPDATE_CONFIGFILE_PATH,config.toString());
         }catch (Exception e){
             log.error("修改配置文件失败,原因：{}",e);
-            e.getMessage();
+            return;
         }
 
     }
@@ -135,7 +142,7 @@ public class Clint {
      * 执行命令
      * @param Command
      */
-    public void executeCommand(String Command) {
+    public Boolean executeCommand(String Command) {
         JSONObject commandJson = JSONObject.parseObject(Command);
 
         ExecuteCommand executeCommand = null;
@@ -148,10 +155,11 @@ public class Clint {
 
                 //实例化ExecuteCommand对象
                 if(jarDownloaded){
-                    executeCommand = (ExecuteCommand) FileUtil.loadObjectFromJar(commandJson.getString("jarPath"),commandJson.getString("classPath"));
+//                    executeCommand = (ExecuteCommand) FileUtil.loadObjectFromJar(commandJson.getString("jarPath"),commandJson.getString("classPath"));
+                    executeCommand = new ExecuteUpdateCommand();
                 }else{
                     log.info("下载jar包失败");
-                    return;
+                    return false;
                 }
 
                 //执行相关操作
@@ -161,6 +169,7 @@ public class Clint {
                         executeCommand.downloadFile(commandJson);
                     }catch (Exception e){
                         log.error("下载文件失败,原因：{}",e);
+                        return false;
                     }
 
                     //关闭程序
@@ -168,6 +177,7 @@ public class Clint {
                         executeCommand.closeApp("appName");
                     }catch (Exception e){
                         log.error("关闭程序失败,原因：{}",e);
+                        return false;
                     }
 
 
@@ -176,6 +186,7 @@ public class Clint {
                         executeCommand.installApp(commandJson);
                     }catch (Exception e){
                         log.error("安装更新包失败,原因：{}",e);
+                        return false;
                     }
 
                     //打开程序
@@ -183,6 +194,7 @@ public class Clint {
                         executeCommand.openApp(commandJson);
                     }catch (Exception e){
                         log.error("打开程序失败,原因：{}",e);
+                        return false;
                     }
 
                     //执行命令
@@ -190,33 +202,32 @@ public class Clint {
                         executeCommand.execute();
                     }catch (Exception e){
                         log.error("执行命令失败,原因：{}",e);
+                        return false;
                     }
 
                     //通知服务器
                     try {
                         executeCommand.noticeServer("schoolId");
+                        return true;
                     }catch (Exception e){
                         log.error("通知服务器失败,原因：{}",e);
+                        return false;
                     }
 
                 }else {
                     log.info("ExecuteCommand对象为空");
-                    return;
+                    return false;
                 }
 
             }else{
                 log.info("没有需要执行的命令");
+                return false;
             }
 
         }catch (Exception e){
-            log.error("执行命令发生异常");
-            e.getMessage();
+            log.error("执行命令发生异常,原因：{}",e);
+            return false;
         }
-
-
-
-
-
 
     }
 

@@ -21,16 +21,16 @@ public class FileUtilTest {
     @Test
     public void readJsonData() {
         try {
-//            System.out.println(FileUtil.readJsonFromFile(RConstant.TEST_CONFIGFILE_PATH));
+//            System.out.println(FileUtil.readJsonFromFile(RConstant.TEST_UPDATE_CONFIGFILE_PATH));
 
 
-            String configJson = FileUtil.readJsonFromFile(RConstant.TEST_CONFIGFILE_PATH);
+            String configJson = FileUtil.readJsonFromFile(RConstant.TEST_UPDATE_CONFIGFILE_PATH);
             JSONObject config = new JSONObject();
             config = JSON.parseObject(configJson);
             //TODO
             log.info(String.valueOf(config));
             config.replace("isFirstLaunch",false);
-            FileUtil.writeJsonToFile(RConstant.TEST_CONFIGFILE_PATH,config.toString());
+            FileUtil.writeJsonToFile(RConstant.TEST_UPDATE_CONFIGFILE_PATH,config.toString());
 
         } catch (Exception e) {
             e.printStackTrace();

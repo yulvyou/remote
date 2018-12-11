@@ -1,6 +1,7 @@
 package com.example.remote;
 
 import com.example.remote.factory.ThreadPoolFactory;
+import com.example.remote.utils.ThreadPoolUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -48,31 +49,14 @@ public class ClintTest {
 
     @Test
     public void threadPoolTest(){
-        ExecutorService executor = Executors.newFixedThreadPool(5);
-        Task task1 = new Task();
-        Future<Boolean> f1 = executor.submit(task1);
-        try {
-            if (f1.get(2, TimeUnit.SECONDS)) { // future将在2秒之后取结果
-                log.info("one complete successfully");
-            }
-        } catch (InterruptedException e) {
-            log.info("future在睡着时被打断");
-            executor.shutdownNow();
-        } catch (ExecutionException e) {
-            log.info("future在尝试取得任务结果时出错");
-            executor.shutdownNow();
-        } catch (TimeoutException e) {
-            log.info("future时间超时");
-            f1.cancel(true);
-            // executor.shutdownNow();
-            // executor.shutdown();
-        } finally {
-//            executor.shutdownNow();
+        ExecutorService executor = ThreadPoolFactory.getNormalPool();
+        for(int i = 0; i<5;i++){
+            Task task1 = new Task();
+            Future<Boolean> f1 = executor.submit(task1);
+            ThreadPoolUtils.monitorTask(f1,2);
+            int j = ((ThreadPoolExecutor)executor).getActiveCount();
+            log.info(j + "");
         }
-        executor.shutdown();
-
-
-
     }
 
 }

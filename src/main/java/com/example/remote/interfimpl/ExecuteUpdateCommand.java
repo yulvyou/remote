@@ -3,21 +3,28 @@ package com.example.remote.interfimpl;
 
 import com.alibaba.fastjson.JSONObject;
 import com.example.remote.interf.ExecuteCommand;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  *
  */
+@Slf4j
 public class ExecuteUpdateCommand implements ExecuteCommand {
 
 
     @Override
     public String downloadFile(JSONObject commandJson) {
+        log.info("进入ExecuteUpdateCommand类中");
         //1、根据commandJson中的“packagePath”字段判断是否已经下载了package
         //1.1、根据“packageHashCode” 判断下载的package是否完整，若不完整则重新下载
 
         //2、根据packageUrl下载package到路径“packagePath”下
         //2.2、根据“packageHashCode” 判断下载的package是否完整
-
+        try {
+            Thread.sleep(15000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         return null;
     }
 

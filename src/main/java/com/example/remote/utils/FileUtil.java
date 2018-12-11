@@ -81,9 +81,8 @@ public class FileUtil {
             return result;
         }catch (Exception e){
             log.error("从文件 {} 中读取 {} 字段失败",filePath,key);
-            e.getMessage();
+            return null;
         }
-        return null;
     }
 
     /**
