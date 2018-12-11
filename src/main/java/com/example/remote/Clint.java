@@ -6,6 +6,7 @@ import com.example.remote.constants.RConstant;
 import com.example.remote.factory.CommandFactory;
 import com.example.remote.interf.ExecuteCommand;
 import com.example.remote.utils.FileUtil;
+import com.example.remote.utils.IpConfigUtils;
 import com.example.remote.utils.WebUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Configuration;
@@ -33,9 +34,15 @@ public class Clint {
             fixconfigFile();
         }
 
-        //向服务端请求本客户端需要执行的命令
-        String Command = requestCommandsFromServer("schoolId","clientNo", String.valueOf(version),"macAddr","plugins");
+        String schoolId = FileUtil.getKeyFromJsonFile(RConstant.TEST_CONFIGFILE_PATH,"schoolID");
+        String clientNo = FileUtil.getKeyFromJsonFile(RConstant.TEST_CONFIGFILE_PATH,"clientNo");
+//        String version = FileUtil.getKeyFromJsonFile(RConstant.TEST_CONFIGFILE_PATH,"version");
+        String plugins = FileUtil.getKeyFromJsonFile(RConstant.TEST_CONFIGFILE_PATH,"plugins");
+        String macAddr = IpConfigUtils.getMACAddress();
+        //TODO 向服务端请求本客户端需要执行的命令(要改参数)
+        String Command = requestCommandsFromServer(schoolId,clientNo, String.valueOf(version),macAddr,plugins);
         log.info("Command{}: {}",version,Command);
+
         //TODO
         version ++;
 
@@ -65,7 +72,6 @@ public class Clint {
 
     /**
      * 判断是否为第一次启动
-     *
      * @return
      */
     public Boolean isFirstLunch() {
@@ -78,7 +84,7 @@ public class Clint {
                 return false;
 
         } catch (Exception e) {
-            log.error("读取R程序的配置文件失败");
+            log.error("读取R程序的配置文件失败,原因：{}",e);
             e.printStackTrace();
         }
 
@@ -93,13 +99,11 @@ public class Clint {
             String configJson = FileUtil.readJsonFromFile(RConstant.TEST_CONFIGFILE_PATH);
             JSONObject config = new JSONObject();
             config = JSON.parseObject(configJson);
-            //TODO
-//            log.info(String.valueOf(config));
 
             config.replace("isFirstLaunch",false);
             FileUtil.writeJsonToFile(RConstant.TEST_CONFIGFILE_PATH,config.toString());
         }catch (Exception e){
-            log.error("修改配置文件失败");
+            log.error("修改配置文件失败,原因：{}",e);
             e.getMessage();
         }
 
@@ -117,13 +121,12 @@ public class Clint {
 
     /**
      * 向服务器请求本客户端需要执行的指令
-     *
      * @param schoolId 学校id
      */
     public String requestCommandsFromServer(String schoolId, String clientNo,String version,String macAddr,String plugins) {
 
         //TODO 模拟从服务器获取数据
-        String result = WebUtils.getJsonStrFromGetUrl("http://localhost:8081/command/get?version="+version);
+        String result = WebUtils.getJsonStrFromGetUrl(RConstant.TEST_SERVER_URL+"/command/get?version="+version);
 
         return result;
     }
@@ -136,45 +139,84 @@ public class Clint {
         JSONObject commandJson = JSONObject.parseObject(Command);
 
         ExecuteCommand executeCommand = null;
-//        //没有需要执行的指令
-//        if (commandJson.get("code").equals("1")||commandJson == null) {
-//            return;
-//        }
+        //没有需要执行的指令
+        try {
+            //查询成功，且有命令需要执行
+            if (commandJson.get("resultCode").equals("0") && commandJson.getString("commandID") != null) {
+                //下载jar包
+                boolean jarDownloaded = downloadJar(commandJson);
 
-        //下载jar包
-        boolean jarDownloaded = downloadJar(commandJson);
+                //实例化ExecuteCommand对象
+                if(jarDownloaded){
+                    executeCommand = (ExecuteCommand) FileUtil.loadObjectFromJar(commandJson.getString("jarPath"),commandJson.getString("classPath"));
+                }else{
+                    log.info("下载jar包失败");
+                    return;
+                }
 
-        //实例化ExecuteCommand对象
-        if(jarDownloaded){
-            executeCommand = (ExecuteCommand) FileUtil.loadObjectFromJar(commandJson.getString("jarPath"),commandJson.getString("classPath"));
-        }else{
-            log.error("实例化ExecuteCommand对象失败");
-            return;
-        }
+                //执行相关操作
+                if(executeCommand!=null){
+                    //下载文件
+                    try {
+                        executeCommand.downloadFile(commandJson);
+                    }catch (Exception e){
+                        log.error("下载文件失败,原因：{}",e);
+                    }
 
-        //执行相关操作
-        if(executeCommand!=null){
-            //下载文件
-            try {
-                executeCommand.downloadFile(commandJson);
-            }catch (Exception e){
-                log.error("下载文件失败：{}",e);
+                    //关闭程序
+                    try {
+                        executeCommand.closeApp("appName");
+                    }catch (Exception e){
+                        log.error("关闭程序失败,原因：{}",e);
+                    }
+
+
+                    //安装更新包
+                    try {
+                        executeCommand.installApp(commandJson);
+                    }catch (Exception e){
+                        log.error("安装更新包失败,原因：{}",e);
+                    }
+
+                    //打开程序
+                    try {
+                        executeCommand.openApp(commandJson);
+                    }catch (Exception e){
+                        log.error("打开程序失败,原因：{}",e);
+                    }
+
+                    //执行命令
+                    try {
+                        executeCommand.execute();
+                    }catch (Exception e){
+                        log.error("执行命令失败,原因：{}",e);
+                    }
+
+                    //通知服务器
+                    try {
+                        executeCommand.noticeServer("schoolId");
+                    }catch (Exception e){
+                        log.error("通知服务器失败,原因：{}",e);
+                    }
+
+                }else {
+                    log.info("ExecuteCommand对象为空");
+                    return;
+                }
+
+            }else{
+                log.info("没有需要执行的命令");
             }
 
-            //关闭程序
-            executeCommand.closeApp("appName");
-            //安装更新包
-            executeCommand.installApp(commandJson);
-            //打开程序
-            executeCommand.openApp(commandJson);
-            //执行命令
-            executeCommand.execute();
-            //通知服务器
-            executeCommand.noticeServer("schoolId");
-        }else {
-            log.error("执行id为 {} 的命令失败",commandJson.getString("commandID"));
-            return;
+        }catch (Exception e){
+            log.error("执行命令发生异常");
+            e.getMessage();
         }
+
+
+
+
+
 
     }
 
@@ -190,7 +232,6 @@ public class Clint {
         try {
             String jarUrl = commandJson.getString("jarUrl");
             String jarPath = commandJson.getString("jarPath");
-//        WebUtils.download("http://localhost:8081/testcommond.jar","F:/ykt_test/testcommond.jar");
             WebUtils.download(jarUrl,jarPath);
             return true;
         }catch (Exception e){
