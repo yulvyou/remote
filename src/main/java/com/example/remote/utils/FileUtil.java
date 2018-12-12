@@ -3,10 +3,25 @@ package com.example.remote.utils;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.compress.archivers.ArchiveEntry;
+import org.apache.commons.compress.archivers.ArchiveException;
+import org.apache.commons.compress.archivers.ArchiveInputStream;
+import org.apache.commons.compress.archivers.ArchiveStreamFactory;
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.tomcat.util.security.MD5Encoder;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.*;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 读取json文件工具类
@@ -52,12 +67,10 @@ public class FileUtil {
      */
     public static void writeJsonToFile(String filePath,String json){
         try {
-            FileOutputStream fos = new FileOutputStream(filePath);
-            fos.write(json.getBytes());
-            fos.close();
+            File file = new File(filePath);
+            FileUtils.writeStringToFile(file,json,"UTF-8");
         }catch (Exception e){
             log.error("写入文件：{} 失败",filePath);
-            e.printStackTrace();
         }
     }
 
@@ -106,5 +119,123 @@ public class FileUtil {
         }
         return obj;
     }
+
+
+    /**
+     * 文件复制，若目的文件没有则创建
+     * @param srcFile 源文件
+     * @param destFile 目标文件
+     * @return
+     */
+    public static boolean copyFile(String srcFile, String destFile){
+        try {
+            File src =new File(srcFile);
+            File dest =new File(destFile);
+            FileUtils.copyFile(src,dest);
+            return true;
+        }catch (Exception e){
+            log.error("文件 {} 拷贝失败,原因：{}",srcFile,e);
+            return false;
+        }
+    }
+
+
+
+    /**
+     * 复制文件夹里面的内容到新的文件夹，如果新文件夹不存在自动创建
+     * @param srcDir
+     * @param destDir
+     * @return
+     */
+    public static boolean copyDirectory(String srcDir, String destDir){
+
+        try {
+            File src =new File(srcDir);
+            File dest =new File(destDir);
+            FileUtils.copyDirectory(src,dest);
+            return true;
+        }catch (Exception e){
+            log.error("目录 {} 拷贝失败,原因：{}",srcDir,e);
+            return false;
+        }
+    }
+
+    /**
+     * 拷贝整个文件夹到新的文件夹,如果新文件夹不存在自动创建
+     * @param srcDir
+     * @param destDir
+     * @return
+     */
+    public static boolean copyDirectoryToDirectory(String srcDir, String destDir){
+        try {
+            File src =new File(srcDir);
+            File dest =new File(destDir);
+            FileUtils.copyDirectoryToDirectory(src,dest);
+            return true;
+        }catch (Exception e){
+            log.error("目录 {} 拷贝失败,原因：{}",srcDir,e);
+            return false;
+        }
+    }
+
+    /**
+     * 获取文件 MD5 code
+     * @param filePath 文件路径
+     * @return
+     */
+    public static String getFileMD5Code(String filePath){
+        try {
+            FileInputStream fis= new FileInputStream(filePath);
+            String md5Code = DigestUtils.md5Hex(IOUtils.toByteArray(fis));
+            IOUtils.closeQuietly(fis);
+            return md5Code;
+        }catch (Exception e){
+            log.error("获取文件 {} 的MD5Code失败,原因：{}",filePath,e);
+            return null;
+        }
+
+    }
+
+
+    /**
+     * 解压zip 文件
+     * @param zipFile 需要解压的zip文件
+     * @param destDir 解压后保存的目录
+     * @return
+     */
+    public static boolean unZip(String zipFile, String destDir) {
+        File f = null;
+        try (ArchiveInputStream i = new ArchiveStreamFactory().createArchiveInputStream(ArchiveStreamFactory.ZIP, Files.newInputStream(Paths.get(zipFile)))) {
+            ArchiveEntry entry = null;
+            while ((entry = i.getNextEntry()) != null) {
+                if (!i.canReadEntryData(entry)) {
+                    continue;
+                }
+                f = new File(destDir, entry.getName());
+                if (entry.isDirectory()) {
+                    if (!f.isDirectory() && !f.mkdirs()) {
+                        throw new IOException("failed to create directory " + f);
+                    }
+                } else {
+                    File parent = f.getParentFile();
+                    if (!parent.isDirectory() && !parent.mkdirs()) {
+                        throw new IOException("failed to create directory " + parent);
+                    }
+                    try (OutputStream o = Files.newOutputStream(f.toPath())) {
+                        IOUtils.copy(i, o);
+                    }
+                }
+            }
+            return true;
+        } catch (IOException | ArchiveException e) {
+
+            log.error("解压文件 {} 失败,原因：{}",zipFile,e);
+            return false;
+        }
+
+    }
+
+
+
 
 }

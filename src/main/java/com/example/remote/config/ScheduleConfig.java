@@ -32,7 +32,7 @@ public class ScheduleConfig implements SchedulingConfigurer, AsyncConfigurer {
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
         scheduler.setPoolSize(5);
         scheduler.setThreadNamePrefix("task-");
-        scheduler.setAwaitTerminationSeconds(60);
+        scheduler.setAwaitTerminationSeconds(360);
         scheduler.setWaitForTasksToCompleteOnShutdown(true);
         return scheduler;
     }

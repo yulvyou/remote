@@ -21,7 +21,7 @@ public class ExecuteUpdateCommand implements ExecuteCommand {
         //2、根据packageUrl下载package到路径“packagePath”下
         //2.2、根据“packageHashCode” 判断下载的package是否完整
         try {
-            Thread.sleep(15000);
+            Thread.sleep(70000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -29,7 +29,7 @@ public class ExecuteUpdateCommand implements ExecuteCommand {
     }
 
     @Override
-    public void closeApp(String appName) {
+    public void closeApp(JSONObject commandJson) {
         //直接关闭程序
     }
 
@@ -51,12 +51,12 @@ public class ExecuteUpdateCommand implements ExecuteCommand {
     }
 
     @Override
-    public void execute() {
+    public void execute(JSONObject commandJson) {
         //运行相关命令
     }
 
     @Override
-    public void noticeServer(String schoolId) {
+    public void noticeServer(JSONObject commandJson) {
 
     }
 }

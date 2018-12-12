@@ -9,6 +9,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
+import sun.rmi.runtime.Log;
 
 /**
  *
@@ -51,8 +52,39 @@ public class FileUtilTest {
 
         ExecuteCommand executeCommand = (ExecuteCommand) FileUtil.loadObjectFromJar("F:/ykt_test/testcommond.jar","com.example.remote.interfimpl.TestCommand");
 
-        executeCommand.closeApp("");
+//        executeCommand.closeApp("");
     }
+
+
+    @Test
+    public void copyDirectoryToDirectory(){
+        String srcDir = "F:\\csum";
+        String destDir = "F:\\ykt_test\\v1";
+        FileUtil.copyDirectoryToDirectory(srcDir,destDir);
+    }
+
+    @Test
+    public void copyFileTest(){
+        String srcFile = "F:\\csum\\bin\\App.bat";
+        String destFile ="F:\\ykt_test\\v1\\App.bat";
+        FileUtil.copyFile(srcFile,destFile);
+    }
+
+    @Test
+    public void getFileMD5CodeTest(){
+        String filePath = "F:\\ykt_test\\commandtest.jar";
+        log.info("MD5:"+FileUtil.getFileMD5Code(filePath));
+
+    }
+
+    @Test
+    public void unZipTest(){
+        String zipFilePath = "F:\\csum\\lib.zip";
+        String destDir = "F:\\ykt_test\\v1";
+        FileUtil.unZip(zipFilePath,destDir);
+    }
+
+
 
 
 }

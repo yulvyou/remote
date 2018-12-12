@@ -15,7 +15,7 @@ public class ThreadPoolUtils {
 
     public static void monitorTask(Future<Boolean> future,long timeout){
         try {
-            if (future.get(timeout, TimeUnit.MINUTES)) { // future将在2秒之后取结果
+            if (future.get(timeout, TimeUnit.MINUTES)) { // future将在timeout分钟之后取结果
                 log.info("执行命令完成");
             }
         } catch (InterruptedException e) {
