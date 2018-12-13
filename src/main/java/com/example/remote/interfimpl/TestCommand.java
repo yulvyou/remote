@@ -3,34 +3,38 @@ package com.example.remote.interfimpl;
 
 import com.alibaba.fastjson.JSONObject;
 import com.example.remote.interf.ExecuteCommand;
+import com.example.remote.utils.CommonUtils;
+import com.example.remote.utils.FileUtil;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  *
  */
 @Slf4j
-public class ExecuteUpdateCommand implements ExecuteCommand {
+public class TestCommand implements ExecuteCommand {
 
 
     @Override
     public boolean downloadFile(JSONObject commandJson) {
-        log.info("进入ExecuteUpdateCommand类中");
-        //1、根据commandJson中的“packagePath”字段判断是否已经下载了package
-        //1.1、根据“packageHashCode” 判断下载的package是否完整，若不完整则重新下载
+        log.info("进入downloadFile");
 
-        //2、根据packageUrl下载package到路径“packagePath”下
-        //2.2、根据“packageHashCode” 判断下载的package是否完整
-        try {
-            Thread.sleep(70000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        String packageUrl = commandJson.getString("packageUrl");
+        String savePath = commandJson.getString("packagePath");
+        String hashCode = commandJson.getString("packageHashCode");
+
+        if (!CommonUtils.isNullOrBlank(packageUrl,savePath,hashCode)){
+            //下载数据包
+            boolean isDownloadFile = FileUtil.downloadFileAndCheck(packageUrl,savePath,hashCode);
+            return isDownloadFile;
+        }else {
+            return false;
         }
-        return true;
     }
 
     @Override
     public boolean closeApp(JSONObject commandJson) {
         //直接关闭程序
+
         return true;
     }
 

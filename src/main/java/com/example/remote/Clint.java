@@ -6,10 +6,8 @@ import com.example.remote.constants.RConstant;
 import com.example.remote.factory.ThreadPoolFactory;
 import com.example.remote.interf.ExecuteCommand;
 import com.example.remote.interfimpl.ExecuteUpdateCommand;
-import com.example.remote.utils.FileUtil;
-import com.example.remote.utils.IpConfigUtils;
-import com.example.remote.utils.ThreadPoolUtils;
-import com.example.remote.utils.WebUtils;
+import com.example.remote.interfimpl.TestCommand;
+import com.example.remote.utils.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.Async;
@@ -62,7 +60,7 @@ public class Clint {
             log.error("访问服务器失败,原因：{}",e);
             return;
         }
-
+        //将从服务器得到的命令（String类型）转为Json格式
         JSONObject commandJson = JSONObject.parseObject(command);
 
         //如果没有需要执行的命令直接返回
@@ -85,9 +83,10 @@ public class Clint {
             }
         });
 
-
-
+        //监听任务（监听此次执行命令操作，如果超过duration分钟命令还没有执行完成，那么就取消这次任务）
         ThreadPoolUtils.monitorTask(future,Integer.valueOf(commandJson.getString("duration")));
+
+        //TODO
         int j = ((ThreadPoolExecutor)executor).getActiveCount();
         log.info("第"+v+"次任务完成："+j + "");
     }//run
@@ -99,6 +98,7 @@ public class Clint {
      */
     public Boolean isFirstLunch() {
         try {
+            //从本程序中的配置文件中查看是不是第一次启动
             String isFirstLaunch = FileUtil.getKeyFromJsonFile(RConstant.TEST_UPDATE_CONFIGFILE_PATH,"isFirstLaunch");
             if (isFirstLaunch.equals("true")){
                 return true;
@@ -110,16 +110,28 @@ public class Clint {
         }
     }
 
+
+    /**
+     * 将本程序设置为开机自启动
+     */
+    public void setAutoLunch() {
+
+    }
+
+
+
     /**
      * 修改配置文件
      */
     public void fixconfigFile() {
         try {
+            //读取本程序的配置文件
             String configJson = FileUtil.readJsonFromFile(RConstant.TEST_UPDATE_CONFIGFILE_PATH);
             JSONObject config = new JSONObject();
             config = JSON.parseObject(configJson);
-
+            //将配置文件中的"isFirstLaunch"属性改为false，表示已经不是第一次启动了
             config.replace("isFirstLaunch",false);
+            //写入配置文件
             FileUtil.writeJsonToFile(RConstant.TEST_UPDATE_CONFIGFILE_PATH,config.toString());
         }catch (Exception e){
             log.error("修改配置文件失败,原因：{}",e);
@@ -128,12 +140,7 @@ public class Clint {
 
     }
 
-    /**
-     * 将本程序设置为开机自启动
-     */
-    public void setAutoLunch() {
 
-    }
 
 
 
@@ -158,7 +165,6 @@ public class Clint {
 //        JSONObject commandJson = JSONObject.parseObject(Command);
 
         ExecuteCommand executeCommand = null;
-        //没有需要执行的指令
         try {
             //查询成功，且有命令需要执行
             if (commandJson.get("resultCode").equals("0") && commandJson.getString("commandID") != null) {
@@ -167,8 +173,9 @@ public class Clint {
 
                 //实例化ExecuteCommand对象
                 if(jarDownloaded){
+                    //TODO  需要释放注释
                     executeCommand = (ExecuteCommand) FileUtil.loadObjectFromJar(commandJson.getString("jarPath"),commandJson.getString("classPath"));
-//                    executeCommand = new ExecuteUpdateCommand();
+//                    executeCommand = new TestCommand();
                 }else{
                     log.info("下载jar包失败");
                     return false;
@@ -247,22 +254,17 @@ public class Clint {
      * 下载jar包
      */
     private boolean downloadJar(JSONObject commandJson) {
-        //1、根据jarPath判断是否本地是否已经下载了
-        //1.1如本地下载了就根据jarHashCode判断jar包是否完整，否则删除原来的重新下载
 
-        //2、根据jarUrl下载jar包到jarPath指定的路径
-        //2.1 根据jarHashCode判断jar包是否完整
-        try {
-            String jarUrl = commandJson.getString("jarUrl");
-            String jarPath = commandJson.getString("jarPath");
-            WebUtils.download(jarUrl,jarPath);
-            return true;
-        }catch (Exception e){
-            log.error("下载Jar包失败");
-            e.getMessage();
+        //获取下载jar包需要的参数
+        String jarUrl = commandJson.getString("jarUrl");
+        String jarPath = commandJson.getString("jarPath");
+        String hashCode = commandJson.getString("jarHashCode");
+        if (!CommonUtils.isNullOrBlank(jarUrl,jarPath,hashCode)){ //如果参数都不为空则下载jar包
+            return FileUtil.downloadFileAndCheck(jarUrl,jarPath,hashCode);
+        }else {
+            return false;
         }
 
-        return false;
     }
 
 

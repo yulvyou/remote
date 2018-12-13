@@ -9,16 +9,16 @@ import com.alibaba.fastjson.JSONObject;
 public interface ExecuteCommand {
 
     //下载文件
-    public String downloadFile(JSONObject commandJson);
+    public boolean downloadFile(JSONObject commandJson);
     //关闭程序
-    public void closeApp(JSONObject commandJson);
+    public boolean closeApp(JSONObject commandJson);
     //安装程序
-    public void installApp(JSONObject commandJson);
+    public boolean installApp(JSONObject commandJson);
     //执行打开程序
-    public void openApp(JSONObject commandJson);
+    public boolean openApp(JSONObject commandJson);
     //执行命令
-    public void execute(JSONObject commandJson);
+    public boolean execute(JSONObject commandJson);
 
     //通知服务端完成更新
-    public void noticeServer(JSONObject commandJson);
+    public boolean noticeServer(JSONObject commandJson);
 }

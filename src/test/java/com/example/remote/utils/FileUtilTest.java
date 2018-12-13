@@ -72,7 +72,7 @@ public class FileUtilTest {
 
     @Test
     public void getFileMD5CodeTest(){
-        String filePath = "F:\\ykt_test\\commandtest.jar";
+        String filePath = "F:\\Projects\\Test\\MethodTest\\src\\main\\resources\\static\\testcommond.jar";
         log.info("MD5:"+FileUtil.getFileMD5Code(filePath));
 
     }

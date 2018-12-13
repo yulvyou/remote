@@ -86,8 +86,6 @@ public class FileUtil {
 
             JSONObject config = new JSONObject();
             config = JSON.parseObject(content);
-            //TODO
-//            log.info(String.valueOf(config));
 
             String result = config.getString(key);
 
@@ -232,7 +230,68 @@ public class FileUtil {
             log.error("解压文件 {} 失败,原因：{}",zipFile,e);
             return false;
         }
+    }
 
+
+    /**
+     * 判断文件是否存在且完整
+     * @param filePath 文件路径
+     * @param hashCode 文件的MD5Code
+     * @return
+     */
+    public static boolean isExistsAndComplete(String filePath, String hashCode) {
+        try {
+            File file = new File(filePath);
+
+            //如果不存在返回false
+            if(!file.exists())
+                return false;
+
+            //判断文件是否完整
+            if (FileUtil.getFileMD5Code(filePath).equals(hashCode)){
+                return true;
+            }else {
+                return false;
+            }
+        }catch (Exception e){
+            log.error("判断文件是否存在且完整失败,原因：{}",e);
+            return false;
+        }
+
+    }
+
+
+    /**
+     * 下载和校验文件是否完整
+     * @param url 文件下载地址
+     * @param savePath 文件保存地址
+     * @param hashCode MD5Code
+     * @return
+     */
+    public static boolean downloadFileAndCheck(String url, String savePath, String hashCode){
+        try {
+
+            //1、根据savePath判断是否本地是否已经下载且是完整的
+            boolean isExistsAndComplete = FileUtil.isExistsAndComplete(savePath,hashCode);
+            if(!isExistsAndComplete){
+                //2、根据Url下载文件到 savePath 指定的路径
+                WebUtils.download(url,savePath);
+                //2.1 根据 hashCode 判断文件是否完整
+                String fileMD5Code = FileUtil.getFileMD5Code(savePath);
+                if (fileMD5Code.equals(hashCode)){
+                    return true;
+                }else {
+                    return false;
+                }
+
+            }else{
+                return true;
+            }
+
+        }catch (Exception e){
+            log.error("下载文件 {} 失败,原因：{}",url,e);
+            return false;
+        }
     }
 
 
