@@ -8,8 +8,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.json.JsonbTester;
 import org.springframework.test.context.junit4.SpringRunner;
 import sun.rmi.runtime.Log;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -72,7 +76,7 @@ public class FileUtilTest {
 
     @Test
     public void getFileMD5CodeTest(){
-        String filePath = "F:\\Projects\\Test\\MethodTest\\src\\main\\resources\\static\\testcommond.jar";
+        String filePath = "F:\\Projects\\Test\\MethodTest\\src\\main\\resources\\static\\v2.zip";
         log.info("MD5:"+FileUtil.getFileMD5Code(filePath));
 
     }
@@ -84,7 +88,36 @@ public class FileUtilTest {
         FileUtil.unZip(zipFilePath,destDir);
     }
 
+    @Test
+    public void copyFileAndDirectoryToDirectoryTest(){
+        String desc = "F:\\csum\\OldVersion\\v2";
+        String rootPath = "F:\\csum\\";
+        List<String> list = new ArrayList();
+        list.add("bin");
+        list.add("config.json");
+        list.add("lib");
 
+        FileUtil.copyFileAndDirectoryToDirectory(desc,list,rootPath);
+
+
+    }
+
+
+
+
+    @Test
+    public void jsonTest(){
+        String json = "{\n" +
+                "\"name\":\"网站\",\n" +
+                "\"num\":3,\n" +
+                "\"sites\":[ \"Google\", \"Runoob\", \"Taobao\" ]\n" +
+                "}";
+        JSONObject jsonObject = JSONObject.parseObject(json);
+
+        List sites = jsonObject.getJSONArray("sites");
+        log.info(sites.size() + "");
+
+    }
 
 
 }

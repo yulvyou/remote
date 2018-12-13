@@ -122,14 +122,19 @@ public class FileUtil {
     /**
      * 文件复制，若目的文件没有则创建
      * @param srcFile 源文件
-     * @param destFile 目标文件
+     * @param destFile 目标文件或者文件夹
      * @return
      */
     public static boolean copyFile(String srcFile, String destFile){
         try {
             File src =new File(srcFile);
             File dest =new File(destFile);
-            FileUtils.copyFile(src,dest);
+            if (dest.isDirectory()){
+                FileUtils.copyFileToDirectory(src,dest);
+            }else {
+                FileUtils.copyFile(src,dest);
+            }
+
             return true;
         }catch (Exception e){
             log.error("文件 {} 拷贝失败,原因：{}",srcFile,e);
@@ -175,6 +180,36 @@ public class FileUtil {
             return false;
         }
     }
+
+
+    /**
+     * 拷贝文件或者文件夹
+     * @param destDir 目标文件夹
+     * @param srcFileOrDirs 需要复制的文件列表
+     * @param rootPath 需要复制的文件的根路径
+     * @return
+     */
+    public static boolean copyFileAndDirectoryToDirectory( String destDir,List<String> srcFileOrDirs,String rootPath){
+        try {
+            for (String srcFileOrDir:srcFileOrDirs ) {
+                String srcPath = rootPath+srcFileOrDir;
+                String destPath = destDir+srcFileOrDir;
+                File src =new File(srcPath);
+                if(src.isDirectory()){
+                    FileUtil.copyDirectoryToDirectory(srcPath,destPath);
+                }else {
+                    FileUtil.copyFile(srcPath,destPath);
+                }
+            }
+            return true;
+        }catch (Exception e){
+            log.error("拷贝文件到 {} 失败,原因：{}",destDir,e);
+            return false;
+        }
+
+    }
+
+
 
     /**
      * 获取文件 MD5 code

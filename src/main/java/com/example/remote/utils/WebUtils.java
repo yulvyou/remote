@@ -99,9 +99,9 @@ public class WebUtils {
 
 
     /**
-     * 下载文件到指定目录
+     * 下载文件到指定文件
      * @param url
-     * @param filepath
+     * @param filepath 文件名称需要带后缀
      * @return
      */
     public static String download(String url, String filepath) {

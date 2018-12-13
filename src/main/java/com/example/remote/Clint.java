@@ -29,7 +29,7 @@ import java.util.concurrent.*;
 public class Clint {
 
     int version = 1;
-    @Scheduled(fixedDelay = 5000)
+    @Scheduled(fixedDelay = 15000)
     @Async
     public void run() {
         int v = version;
@@ -174,8 +174,8 @@ public class Clint {
                 //实例化ExecuteCommand对象
                 if(jarDownloaded){
                     //TODO  需要释放注释
-                    executeCommand = (ExecuteCommand) FileUtil.loadObjectFromJar(commandJson.getString("jarPath"),commandJson.getString("classPath"));
-//                    executeCommand = new TestCommand();
+//                    executeCommand = (ExecuteCommand) FileUtil.loadObjectFromJar(commandJson.getString("jarPath"),commandJson.getString("classPath"));
+                    executeCommand = new TestCommand();
                 }else{
                     log.info("下载jar包失败");
                     return false;

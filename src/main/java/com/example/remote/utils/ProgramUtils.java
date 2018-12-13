@@ -15,9 +15,9 @@ import java.util.List;
 public class ProgramUtils {
     /**
      * 关闭程序
-     * @param programName 需要关闭程序的名称（要带后缀）
+     * @param programName 需要关闭程序的名称（要带后缀，如 Editor.exe）
      */
-    public static void shutdownProgram(String programName) {
+    public static boolean shutdownProgram(String programName) {
         String command = "taskkill /f /im " + programName;
         Runtime runtime = Runtime.getRuntime();
         try {
@@ -28,8 +28,10 @@ public class ProgramUtils {
             while ((line=br.readLine())!=null) {
                 b.append(line+"\n");
             }
+            return true;
         } catch (Exception e) {
             log.error("关闭程序"+programName +" 失败，原因："+e);
+            return false;
         }
     }
 
