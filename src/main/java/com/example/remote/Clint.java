@@ -53,14 +53,10 @@ public class Clint {
 
             //TODO 向服务端请求本客户端需要执行的命令(要改参数)
             String command = null;
-            try {
-                command = requestCommandsFromServer(schoolId,clientNo, String.valueOf(version),macAddr,plugins);
-                if(command == null || command.equals(""))
-                    return;
-            }catch (Exception e){
-                log.error("访问服务器失败,原因：{}",e);
+            command = requestCommandsFromServer(schoolId,clientNo, String.valueOf(version),macAddr,plugins);
+            if(command == null || command.equals(""))
                 return;
-            }
+
             //将从服务器得到的命令（String类型）转为Json格式
             JSONObject commandJson = JSONObject.parseObject(command);
 
@@ -101,7 +97,7 @@ public class Clint {
      * 判断是否为第一次启动
      * @return
      */
-    public Boolean isFirstLunch() {
+    public Boolean isFirstLunch() throws Exception {
         try {
             //从本程序中的配置文件中查看是不是第一次启动
             String isFirstLaunch = FileUtil.getKeyFromJsonFile(RConstant.TEST_UPDATE_CONFIGFILE_PATH,"isFirstLaunch");
@@ -110,8 +106,7 @@ public class Clint {
             }else
                 return false;
         } catch (Exception e) {
-            log.error("读取R程序的配置文件失败,原因：{}",e);
-            return false;
+            throw new Exception("读取R程序的配置文件失败，原因："+e.getMessage());
         }
     }
 
@@ -128,7 +123,7 @@ public class Clint {
     /**
      * 修改配置文件
      */
-    public void fixconfigFile() {
+    public void fixconfigFile() throws Exception {
         try {
             //读取本程序的配置文件
             String configJson = FileUtil.readJsonFromFile(RConstant.TEST_UPDATE_CONFIGFILE_PATH);
@@ -139,8 +134,7 @@ public class Clint {
             //写入配置文件
             FileUtil.writeJsonToFile(RConstant.TEST_UPDATE_CONFIGFILE_PATH,config.toString());
         }catch (Exception e){
-            log.error("修改配置文件失败,原因：{}",e);
-            return;
+            throw new Exception("修改配置文件失败，原因："+e.getMessage());
         }
 
     }
@@ -150,12 +144,17 @@ public class Clint {
      * 向服务器请求本客户端需要执行的指令
      * @param schoolId 学校id
      */
-    public String requestCommandsFromServer(String schoolId, String clientNo,String version,String macAddr,String plugins) {
+    public String requestCommandsFromServer(String schoolId, String clientNo,String version,String macAddr,String plugins) throws Exception {
 
-        //TODO 模拟从服务器获取数据
-        String result = WebUtils.getJsonStrFromGetUrl(RConstant.TEST_SERVER_URL+"/command/get?version="+version);
+        try {
+            //TODO 模拟从服务器获取数据
+            String result = WebUtils.getJsonStrFromGetUrl(RConstant.TEST_SERVER_URL+"/command/get?version="+version);
 
-        return result;
+            return result;
+        }catch (Exception e){
+            throw new Exception("向服务器请求本客户端需要执行的指令失败，原因："+e.getMessage());
+        }
+
     }
 
     /**
@@ -164,8 +163,6 @@ public class Clint {
      */
     public boolean executeCommand(JSONObject commandJson) {
 //        JSONObject commandJson = JSONObject.parseObject(Command);
-
-
         try {
             ExecuteCommand executeCommand = null;
             //查询成功，且有命令需要执行
@@ -186,55 +183,18 @@ public class Clint {
                 //执行相关操作
                 if(executeCommand!=null){
                     //下载文件
-                    try {
-                        executeCommand.downloadFile(commandJson);
-                    }catch (Exception e){
-                        log.error("下载文件失败,原因：{}",e);
-                        return false;
-                    }
-
+                    executeCommand.downloadFile(commandJson);
                     //关闭程序
-                    try {
-                        executeCommand.closeApp(commandJson);
-                    }catch (Exception e){
-                        log.error("关闭程序失败,原因：{}",e);
-                        return false;
-                    }
-
-
+                    executeCommand.closeApp(commandJson);
                     //安装更新包
-                    try {
-                        executeCommand.installApp(commandJson);
-                    }catch (Exception e){
-                        log.error("安装更新包失败,原因：{}",e);
-                        return false;
-                    }
-
+                    executeCommand.installApp(commandJson);
                     //打开程序
-                    try {
-                        executeCommand.openApp(commandJson);
-                    }catch (Exception e){
-                        log.error("打开程序失败,原因：{}",e);
-                        return false;
-                    }
-
+                    executeCommand.openApp(commandJson);
                     //执行命令
-                    try {
-                        executeCommand.execute(commandJson);
-                    }catch (Exception e){
-                        log.error("执行命令失败,原因：{}",e);
-                        return false;
-                    }
-
+                    executeCommand.execute(commandJson);
                     //通知服务器
-                    try {
-                        executeCommand.noticeServer(commandJson);
-                        return true;
-                    }catch (Exception e){
-                        log.error("通知服务器失败,原因：{}",e);
-                        return false;
-                    }
-
+                    executeCommand.noticeServer(commandJson);
+                    return true;
                 }else {
                     log.info("ExecuteCommand对象为空");
                     return false;
@@ -246,16 +206,15 @@ public class Clint {
             }
 
         }catch (Exception e){
-            log.error("执行命令发生异常,原因：{}",e);
+            log.error("执行命令发生异常,原因：{}",e.getMessage());
             return false;
         }
-
     }
 
     /**
      * 下载jar包
      */
-    private boolean downloadJar(JSONObject commandJson) {
+    private boolean downloadJar(JSONObject commandJson) throws Exception {
         try {
             //获取下载jar包需要的参数
             String jarUrl = commandJson.getString("jarUrl");
@@ -267,11 +226,8 @@ public class Clint {
                 return false;
             }
         }catch (Exception e){
-            log.error(",原因：{}",e);
-            return false;
+            throw new Exception("下载jar包失败，原因："+e.getMessage());
         }
-
-
 
     }
 

@@ -183,9 +183,35 @@ public class FileUtil {
      */
     public static boolean copyFileAndDirectoryToDirectory( String destDir,List<String> srcFileOrDirs,String rootPath) throws Exception {
         try {
+            copyFileAndDirectoryToDirectory(destDir,srcFileOrDirs,rootPath,false);
+            return true;
+        }catch (Exception e){
+            throw e;
+        }
+
+    }
+
+
+    /**
+     * 拷贝文件或者文件夹
+     * @param destDir 复制的目标文件夹
+     * @param srcFileOrDirs 需要复制的文件夹
+     * @param rootPath 需要复制的文件夹的根路径
+     * @param createDir 是否需要创建对应的文件夹（例如srcFileOrDir = "/bin/hello.txt",若createDir = true,那么会复制到destDir+"/bin目录下"）
+     * @return
+     * @throws Exception
+     */
+    public static boolean copyFileAndDirectoryToDirectory( String destDir,List<String> srcFileOrDirs,String rootPath,boolean createDir) throws Exception {
+        try {
             for (String srcFileOrDir:srcFileOrDirs ) {
                 String srcPath = rootPath+srcFileOrDir;
-                String destPath = destDir+srcFileOrDir;
+                String destPath = null;
+                if (createDir){
+                    destPath = destDir + srcFileOrDir;
+                }else {
+                    destPath = destDir;
+                }
+
                 File src =new File(srcPath);
                 if(src.isDirectory()){
                     FileUtil.copyDirectoryToDirectory(srcPath,destPath);
@@ -199,8 +225,6 @@ public class FileUtil {
         }
 
     }
-
-
 
     /**
      * 获取文件 MD5 code

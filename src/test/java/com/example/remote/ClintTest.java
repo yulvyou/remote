@@ -44,7 +44,7 @@ public class ClintTest {
     @Test
     public void isFirstLunch() {
         Clint clint = new Clint();
-        clint.isFirstLunch();
+//        clint.isFirstLunch();
     }
 
     @Test

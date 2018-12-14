@@ -27,9 +27,15 @@ public class ProgramUtilsTest {
     @Test
     public void startProgram() {
         try {
-            ProgramUtils.startProgram("C:/Users/Administrator/AppData/Local/GitBook_Editor/app-7.0.12/Editor.exe");
+            ProgramUtils.startProgram("F:\\csum\\test.exe");
+            log.info("程序是否打开："+ProgramUtils.findProcess("test.exe"));
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+    @Test
+    public void findProgram(){
+        log.info("程序是否打开："+ProgramUtils.findProcess("Editor.exe"));
+
     }
 }

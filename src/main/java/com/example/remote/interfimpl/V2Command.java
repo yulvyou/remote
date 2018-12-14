@@ -6,7 +6,6 @@ import com.example.remote.constants.RConstant;
 import com.example.remote.interf.ExecuteCommand;
 import com.example.remote.utils.*;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 
 import java.util.List;
 
@@ -14,7 +13,7 @@ import java.util.List;
  *
  */
 @Slf4j
-public class TestCommand implements ExecuteCommand {
+public class V2Command implements ExecuteCommand {
 
 
     @Override

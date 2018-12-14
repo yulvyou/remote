@@ -60,4 +60,33 @@ public class ProgramUtils {
     }
 
 
+    /**
+     * 查询某个程序是否打开了
+     * @param processName 程序的名称
+     * @return
+     */
+    public static boolean findProcess(String processName) {
+        BufferedReader bufferedReader = null;
+        try {
+            Process proc = Runtime.getRuntime().exec("tasklist -fi " + '"' + "imagename eq " + processName +'"');
+            bufferedReader = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+            String line = null;
+            while ((line = bufferedReader.readLine()) != null) {
+                if (line.contains(processName)) {
+                    return true;
+                }
+            }
+            return false;
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return false;
+        } finally {
+            if (bufferedReader != null) {
+                try {
+                    bufferedReader.close();
+                } catch (Exception ex) {}
+            }
+        }
+    }
+
 }
