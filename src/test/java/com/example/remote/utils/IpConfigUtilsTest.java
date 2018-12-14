@@ -18,7 +18,7 @@ public class IpConfigUtilsTest {
 
     @Test
     public void getMACAddress() {
-        log.info("mac地址为：{}",IpConfigUtils.getMACAddress());
+//        log.info("mac地址为：{}",IpConfigUtils.getMACAddress());
 
     }
 }

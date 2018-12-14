@@ -32,63 +32,68 @@ public class Clint {
     @Scheduled(fixedDelay = 15000)
     @Async
     public void run() {
-        int v = version;
-        log.info("定时任务run方法");
-        //是否为第一次启动
-        if (isFirstLunch()) {
-            //设置为开机自启动
-            setAutoLunch();
-            //修改配置文件（isFirstLaunch改为false）
-            fixconfigFile();
-        }
-
-        //获取相关信息
-        String schoolId = FileUtil.getKeyFromJsonFile(RConstant.TEST_CURRENT_CONFIGFILE_PATH,"schoolID");
-        String clientNo = FileUtil.getKeyFromJsonFile(RConstant.TEST_CURRENT_CONFIGFILE_PATH,"clientNo");
-//        String version = FileUtil.getKeyFromJsonFile(RConstant.TEST_CURRENT_CONFIGFILE_PATH,"version");
-        String plugins = FileUtil.getKeyFromJsonFile(RConstant.TEST_CURRENT_CONFIGFILE_PATH,"plugins");
-        String macAddr = IpConfigUtils.getMACAddress();
-
-
-        //TODO 向服务端请求本客户端需要执行的命令(要改参数)
-        String command = null;
         try {
-            command = requestCommandsFromServer(schoolId,clientNo, String.valueOf(version),macAddr,plugins);
-            if(command == null || command.equals(""))
-                return;
-        }catch (Exception e){
-            log.error("访问服务器失败,原因：{}",e);
-            return;
-        }
-        //将从服务器得到的命令（String类型）转为Json格式
-        JSONObject commandJson = JSONObject.parseObject(command);
-
-        //如果没有需要执行的命令直接返回
-        if(commandJson.get("haveCommands") == null){
-            return;
-        }
-
-
-        //TODO
-        version ++;
-        log.info("Command{}: {}",version,command);
-
-        //执行命令
-        ExecutorService executor = ThreadPoolFactory.getNormalPool();
-        String finalCommand = command;
-        Future<Boolean> future = executor.submit(new Callable<Boolean>() {
-            @Override
-            public Boolean call() throws Exception {
-                return executeCommand(commandJson);
+            int v = version;
+            log.info("定时任务run方法");
+            //是否为第一次启动
+            if (isFirstLunch()) {
+                //设置为开机自启动
+                setAutoLunch();
+                //修改配置文件（isFirstLaunch改为false）
+                fixconfigFile();
             }
-        });
 
-        //监听任务（监听此次执行命令操作，如果超过duration分钟命令还没有执行完成，那么就取消这次任务）
-        ThreadPoolUtils.monitorTask(future,Integer.valueOf(commandJson.getString("duration")));
+            //获取相关信息
+            String schoolId = FileUtil.getKeyFromJsonFile(RConstant.TEST_CURRENT_CONFIGFILE_PATH,"schoolID");
+            String clientNo = FileUtil.getKeyFromJsonFile(RConstant.TEST_CURRENT_CONFIGFILE_PATH,"clientNo");
+//        String version = FileUtil.getKeyFromJsonFile(RConstant.TEST_CURRENT_CONFIGFILE_PATH,"version");
+            String plugins = FileUtil.getKeyFromJsonFile(RConstant.TEST_CURRENT_CONFIGFILE_PATH,"plugins");
+            String macAddr = IpConfigUtils.getMACAddress();
 
-        //TODO
-        int j = ((ThreadPoolExecutor)executor).getActiveCount();
-        log.info("第"+v+"次任务完成："+j + "");
+
+            //TODO 向服务端请求本客户端需要执行的命令(要改参数)
+            String command = null;
+            try {
+                command = requestCommandsFromServer(schoolId,clientNo, String.valueOf(version),macAddr,plugins);
+                if(command == null || command.equals(""))
+                    return;
+            }catch (Exception e){
+                log.error("访问服务器失败,原因：{}",e);
+                return;
+            }
+            //将从服务器得到的命令（String类型）转为Json格式
+            JSONObject commandJson = JSONObject.parseObject(command);
+
+            //如果没有需要执行的命令直接返回
+            if(commandJson.get("haveCommands") == null){
+                return;
+            }
+
+
+            //TODO
+            version ++;
+            log.info("Command{}: {}",version,command);
+
+            //执行命令
+            ExecutorService executor = ThreadPoolFactory.getNormalPool();
+            String finalCommand = command;
+            Future<Boolean> future = executor.submit(new Callable<Boolean>() {
+                @Override
+                public Boolean call() throws Exception {
+                    return executeCommand(commandJson);
+                }
+            });
+
+            //监听任务（监听此次执行命令操作，如果超过duration分钟命令还没有执行完成，那么就取消这次任务）
+            ThreadPoolUtils.monitorTask(future,Integer.valueOf(commandJson.getString("duration")));
+
+            //TODO
+            int j = ((ThreadPoolExecutor)executor).getActiveCount();
+            log.info("第"+v+"次任务完成："+j + "");
+        }catch (Exception e){
+            log.error("执行任务失败,原因：{}",e.getMessage());
+        }
+
     }//run
 
 
@@ -141,10 +146,6 @@ public class Clint {
     }
 
 
-
-
-
-
     /**
      * 向服务器请求本客户端需要执行的指令
      * @param schoolId 学校id
@@ -164,8 +165,9 @@ public class Clint {
     public boolean executeCommand(JSONObject commandJson) {
 //        JSONObject commandJson = JSONObject.parseObject(Command);
 
-        ExecuteCommand executeCommand = null;
+
         try {
+            ExecuteCommand executeCommand = null;
             //查询成功，且有命令需要执行
             if (commandJson.get("resultCode").equals("0") && commandJson.getString("commandID") != null) {
                 //下载jar包
@@ -254,16 +256,22 @@ public class Clint {
      * 下载jar包
      */
     private boolean downloadJar(JSONObject commandJson) {
-
-        //获取下载jar包需要的参数
-        String jarUrl = commandJson.getString("jarUrl");
-        String jarPath = commandJson.getString("jarPath");
-        String hashCode = commandJson.getString("jarHashCode");
-        if (!CommonUtils.isNullOrBlank(jarUrl,jarPath,hashCode)){ //如果参数都不为空则下载jar包
-            return FileUtil.downloadFileAndCheck(jarUrl,jarPath,hashCode);
-        }else {
+        try {
+            //获取下载jar包需要的参数
+            String jarUrl = commandJson.getString("jarUrl");
+            String jarPath = commandJson.getString("jarPath");
+            String hashCode = commandJson.getString("jarHashCode");
+            if (!CommonUtils.isNullOrBlank(jarUrl,jarPath,hashCode)){ //如果参数都不为空则下载jar包
+                return FileUtil.downloadFileAndCheck(jarUrl,jarPath,hashCode);
+            }else {
+                return false;
+            }
+        }catch (Exception e){
+            log.error(",原因：{}",e);
             return false;
         }
+
+
 
     }
 

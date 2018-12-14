@@ -21,7 +21,7 @@ public class ProgramUtilsTest {
 
     @Test
     public void shutdownProgram() {
-        log.info("关闭程序："+ProgramUtils.shutdownProgram("Editor.exe"));
+//        log.info("关闭程序："+ProgramUtils.shutdownProgram("Editor.exe"));
     }
 
     @Test

@@ -104,7 +104,7 @@ public class WebUtils {
      * @param filepath 文件名称需要带后缀
      * @return
      */
-    public static String download(String url, String filepath) {
+    public static boolean download(String url, String filepath) throws Exception {
         try {
             HttpClient client = new DefaultHttpClient();
             HttpGet httpget = new HttpGet(url);
@@ -127,11 +127,10 @@ public class WebUtils {
             is.close();
             fileout.flush();
             fileout.close();
-
+            return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new Exception("下载文件"+url+"失败,原因："+e.getMessage());
         }
-        return null;
     }
 
 

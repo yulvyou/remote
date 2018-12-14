@@ -34,14 +34,13 @@ public class FileUtil {
      * @param filePath 文件的路径
      * @return
      */
-    public static String readJsonFromFile(String filePath) {
-
-        StringBuffer strbuffer = new StringBuffer();
-        File myFile = new File(filePath);
-        if (!myFile.exists()) {
-            log.error("文件：{}，不存在",filePath);
-        }
+    public static String readJsonFromFile(String filePath) throws Exception {
         try {
+            StringBuffer strbuffer = new StringBuffer();
+            File myFile = new File(filePath);
+            if (!myFile.exists()) {
+                log.error("文件：{}，不存在",filePath);
+            }
             FileInputStream fis = new FileInputStream(filePath);
             InputStreamReader inputStreamReader = new InputStreamReader(fis, "UTF-8");
             BufferedReader in  = new BufferedReader(inputStreamReader);
@@ -52,11 +51,11 @@ public class FileUtil {
             }
             in.close();
             fis.close();
+            return strbuffer.toString();
         } catch (IOException e) {
-            log.error("读取文件：{} 失败",filePath);
-            e.getStackTrace();
+            throw new Exception("读取文件"+filePath+"失败,原因："+e.getMessage());
         }
-        return strbuffer.toString();
+
     }
 
 
@@ -65,12 +64,12 @@ public class FileUtil {
      * @param filePath
      * @param json
      */
-    public static void writeJsonToFile(String filePath,String json){
+    public static void writeJsonToFile(String filePath,String json) throws Exception {
         try {
             File file = new File(filePath);
             FileUtils.writeStringToFile(file,json,"UTF-8");
         }catch (Exception e){
-            log.error("写入文件：{} 失败",filePath);
+            throw new Exception("写入文件"+filePath+"失败,原因："+e.getMessage());
         }
     }
 
@@ -80,7 +79,7 @@ public class FileUtil {
      * @param key 需要查询的key
      * @return
      */
-    public static String getKeyFromJsonFile(String filePath,String key){
+    public static String getKeyFromJsonFile(String filePath,String key) throws Exception {
         try {
             String content = readJsonFromFile(filePath);
 
@@ -91,8 +90,7 @@ public class FileUtil {
 
             return result;
         }catch (Exception e){
-            log.error("从文件 {} 中读取 {} 字段失败",filePath,key);
-            return null;
+            throw new Exception("从文件"+filePath+"中获取"+key+"值失败,原因："+e.getMessage());
         }
     }
 
@@ -102,9 +100,9 @@ public class FileUtil {
      * @param loadClassPath 指定类（需要带上包名）
      * @return
      */
-    public static Object loadObjectFromJar(String jarPath,String loadClassPath){
-        Object obj = null;
+    public static Object loadObjectFromJar(String jarPath,String loadClassPath) throws Exception {
         try {
+            Object obj = null;
             File file=new File(jarPath);//类路径(包文件上一层)
             URL url=file.toURI().toURL();
             ClassLoader loader=new URLClassLoader(new URL[]{url});//创建类加载器
@@ -113,9 +111,8 @@ public class FileUtil {
             obj=cls.newInstance();//初始化一个实例
             return obj;
         }catch (Exception e){
-            log.error("加载{}jar包中的{}类失败",jarPath,loadClassPath);
+            throw new Exception("加载"+jarPath +"包中的"+loadClassPath+"类失败,原因："+e.getMessage());
         }
-        return obj;
     }
 
 
@@ -125,7 +122,7 @@ public class FileUtil {
      * @param destFile 目标文件或者文件夹
      * @return
      */
-    public static boolean copyFile(String srcFile, String destFile){
+    public static boolean copyFile(String srcFile, String destFile) throws Exception {
         try {
             File src =new File(srcFile);
             File dest =new File(destFile);
@@ -134,11 +131,9 @@ public class FileUtil {
             }else {
                 FileUtils.copyFile(src,dest);
             }
-
             return true;
         }catch (Exception e){
-            log.error("文件 {} 拷贝失败,原因：{}",srcFile,e);
-            return false;
+            throw new Exception("文件"+srcFile+"拷贝失败,原因："+e.getMessage());
         }
     }
 
@@ -150,16 +145,14 @@ public class FileUtil {
      * @param destDir
      * @return
      */
-    public static boolean copyDirectory(String srcDir, String destDir){
-
+    public static boolean copyDirectory(String srcDir, String destDir) throws Exception {
         try {
             File src =new File(srcDir);
             File dest =new File(destDir);
             FileUtils.copyDirectory(src,dest);
             return true;
         }catch (Exception e){
-            log.error("目录 {} 拷贝失败,原因：{}",srcDir,e);
-            return false;
+            throw new Exception("目录"+srcDir+"拷贝失败,原因："+e.getMessage());
         }
     }
 
@@ -169,15 +162,14 @@ public class FileUtil {
      * @param destDir
      * @return
      */
-    public static boolean copyDirectoryToDirectory(String srcDir, String destDir){
+    public static boolean copyDirectoryToDirectory(String srcDir, String destDir) throws Exception {
         try {
             File src =new File(srcDir);
             File dest =new File(destDir);
             FileUtils.copyDirectoryToDirectory(src,dest);
             return true;
         }catch (Exception e){
-            log.error("目录 {} 拷贝失败,原因：{}",srcDir,e);
-            return false;
+            throw new Exception("目录"+srcDir+"拷贝失败,原因："+e.getMessage());
         }
     }
 
@@ -189,7 +181,7 @@ public class FileUtil {
      * @param rootPath 需要复制的文件的根路径
      * @return
      */
-    public static boolean copyFileAndDirectoryToDirectory( String destDir,List<String> srcFileOrDirs,String rootPath){
+    public static boolean copyFileAndDirectoryToDirectory( String destDir,List<String> srcFileOrDirs,String rootPath) throws Exception {
         try {
             for (String srcFileOrDir:srcFileOrDirs ) {
                 String srcPath = rootPath+srcFileOrDir;
@@ -203,8 +195,7 @@ public class FileUtil {
             }
             return true;
         }catch (Exception e){
-            log.error("拷贝文件到 {} 失败,原因：{}",destDir,e);
-            return false;
+            throw new Exception("拷贝文件"+srcFileOrDirs.toString()+"失败,原因："+e.getMessage());
         }
 
     }
@@ -216,15 +207,14 @@ public class FileUtil {
      * @param filePath 文件路径
      * @return
      */
-    public static String getFileMD5Code(String filePath){
+    public static String getFileMD5Code(String filePath) throws Exception {
         try {
             FileInputStream fis= new FileInputStream(filePath);
             String md5Code = DigestUtils.md5Hex(IOUtils.toByteArray(fis));
             IOUtils.closeQuietly(fis);
             return md5Code;
         }catch (Exception e){
-            log.error("获取文件 {} 的MD5Code失败,原因：{}",filePath,e);
-            return null;
+            throw new Exception("获取"+filePath+"的MD5Code失败,原因："+e.getMessage());
         }
 
     }
@@ -236,9 +226,10 @@ public class FileUtil {
      * @param destDir 解压后保存的目录
      * @return
      */
-    public static boolean unZip(String zipFile, String destDir) {
-        File f = null;
+    public static boolean unZip(String zipFile, String destDir) throws Exception {
+
         try (ArchiveInputStream i = new ArchiveStreamFactory().createArchiveInputStream(ArchiveStreamFactory.ZIP, Files.newInputStream(Paths.get(zipFile)))) {
+            File f = null;
             ArchiveEntry entry = null;
             while ((entry = i.getNextEntry()) != null) {
                 if (!i.canReadEntryData(entry)) {
@@ -260,10 +251,8 @@ public class FileUtil {
                 }
             }
             return true;
-        } catch (IOException | ArchiveException e) {
-
-            log.error("解压文件 {} 失败,原因：{}",zipFile,e);
-            return false;
+        } catch (Exception e) {
+            throw new Exception("解压文件"+zipFile+"失败,原因："+e.getMessage());
         }
     }
 
@@ -274,7 +263,7 @@ public class FileUtil {
      * @param hashCode 文件的MD5Code
      * @return
      */
-    public static boolean isExistsAndComplete(String filePath, String hashCode) {
+    public static boolean isExistsAndComplete(String filePath, String hashCode) throws Exception {
         try {
             File file = new File(filePath);
 
@@ -289,8 +278,7 @@ public class FileUtil {
                 return false;
             }
         }catch (Exception e){
-            log.error("判断文件是否存在且完整失败,原因：{}",e);
-            return false;
+            throw new Exception("判断文件"+filePath+"是否存在且完整失败,原因："+e.getMessage());
         }
 
     }
@@ -303,9 +291,8 @@ public class FileUtil {
      * @param hashCode MD5Code
      * @return
      */
-    public static boolean downloadFileAndCheck(String url, String savePath, String hashCode){
+    public static boolean downloadFileAndCheck(String url, String savePath, String hashCode) throws Exception {
         try {
-
             //1、根据savePath判断是否本地是否已经下载且是完整的
             boolean isExistsAndComplete = FileUtil.isExistsAndComplete(savePath,hashCode);
             if(!isExistsAndComplete){
@@ -322,14 +309,8 @@ public class FileUtil {
             }else{
                 return true;
             }
-
         }catch (Exception e){
-            log.error("下载文件 {} 失败,原因：{}",url,e);
-            return false;
+            throw new Exception("下载文件"+url+"失败,原因："+e.getMessage());
         }
     }
-
-
-
-
 }

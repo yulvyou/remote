@@ -20,59 +20,78 @@ public class TestCommand implements ExecuteCommand {
 
     @Override
     public boolean downloadFile(JSONObject commandJson) {
-        log.info("进入downloadFile");
-        //得到数据包的相关参数
-        String packageUrl = commandJson.getString("packageUrl");
-        String savePath = commandJson.getString("packagePath");
-        String hashCode = commandJson.getString("packageHashCode");
 
-        if (!CommonUtils.isNullOrBlank(packageUrl,savePath,hashCode)){//判断上列参数是否为null或者为“”
-            //下载数据包
-            boolean isDownloadFile = FileUtil.downloadFileAndCheck(packageUrl,savePath,hashCode);
-            return isDownloadFile;
-        }else {
+        try {
+            log.info("进入downloadFile");
+            //得到数据包的相关参数
+            String packageUrl = commandJson.getString("packageUrl");
+            String savePath = commandJson.getString("packagePath");
+            String hashCode = commandJson.getString("packageHashCode");
+
+            if (!CommonUtils.isNullOrBlank(packageUrl,savePath,hashCode)){//判断上列参数是否为null或者为“”
+                //下载数据包
+                boolean isDownloadFile = FileUtil.downloadFileAndCheck(packageUrl,savePath,hashCode);
+                return isDownloadFile;
+            }else {
+                return false;
+            }
+        }catch (Exception e){
+            log.error(",原因：{}",e);
             return false;
         }
+
     }
 
     @Override
     public boolean closeApp(JSONObject commandJson) {
-        //直接关闭程序
-        return ProgramUtils.shutdownProgram(commandJson.getString("programName"));
+        try {
+            //直接关闭程序
+            return ProgramUtils.shutdownProgram(commandJson.getString("programName"));
+        }catch (Exception e){
+            log.error(",原因：{}",e);
+            return false;
+        }
+
     }
 
     @Override
     public boolean installApp(JSONObject commandJson) {
-        //1、备份原来版本的文件到OldVersion中
-        JSONObject detailJson = commandJson.getJSONObject("detail");
-        //程序根路径
-        String rootPath = commandJson.getString("rootPath");
-        //存放备份的文件夹
-        String feedbackDesc = rootPath+"/OldVersion/"+detailJson.getString("preVersion");
-        //需要备份的文件列表
-        List feedbackFiles = commandJson.getJSONArray("backFiles");
-        //更新包解压路径
-        String unZipPath = commandJson.getString("updateProgramRootPath")+
-                "/package/";
-        //更新包路径
-        String packagePath = commandJson.getString("updateProgramRootPath")+
-                "/package/"+detailJson.getString("version");
+        try {
+            //1、备份原来版本的文件到OldVersion中
+            JSONObject detailJson = commandJson.getJSONObject("detail");
+            //程序根路径
+            String rootPath = commandJson.getString("rootPath");
+            //存放备份的文件夹
+            String feedbackDesc = rootPath+"/OldVersion/"+detailJson.getString("preVersion");
+            //需要备份的文件列表
+            List feedbackFiles = commandJson.getJSONArray("backFiles");
+            //更新包解压路径
+            String unZipPath = commandJson.getString("updateProgramRootPath")+
+                    "/package/";
+            //更新包路径
+            String packagePath = commandJson.getString("updateProgramRootPath")+
+                    "/package/"+detailJson.getString("version");
 
 
-        //开始备份
-        boolean isFeedbacked = FileUtil.copyFileAndDirectoryToDirectory(feedbackDesc,feedbackFiles,rootPath);
+            //开始备份
+            boolean isFeedbacked = FileUtil.copyFileAndDirectoryToDirectory(feedbackDesc,feedbackFiles,rootPath);
 
-        //2、根据commandJson中的“datail-->files”字段替换文件，同时将“detail”字段写入config.json中
-        //解压更新包
-        boolean isUnZiped = FileUtil.unZip(commandJson.getString("packagePath"),unZipPath);
+            //2、根据commandJson中的“datail-->files”字段替换文件，同时将“detail”字段写入config.json中
+            //解压更新包
+            boolean isUnZiped = FileUtil.unZip(commandJson.getString("packagePath"),unZipPath);
 
-        List updateFiles = detailJson.getJSONArray("files");
+            List updateFiles = detailJson.getJSONArray("files");
 
-        //增加或者替换文件
-        boolean isReplaced = FileUtil.copyFileAndDirectoryToDirectory(rootPath,updateFiles,packagePath);
+            //增加或者替换文件
+            boolean isReplaced = FileUtil.copyFileAndDirectoryToDirectory(rootPath,updateFiles,packagePath);
 
 
-        return true;
+            return true;
+        }catch (Exception e){
+            log.error(",原因：{}",e);
+            return false;
+        }
+
     }
 
     @Override

@@ -16,7 +16,7 @@ public class IpConfigUtils {
      * 获取MAC地址的方法
      * @return
      */
-    public static String getMACAddress(){
+    public static String getMACAddress() throws Exception {
         try {
             //获得网络接口对象（即网卡），并得到mac地址，mac地址存在于一个byte数组中。
             InetAddress ia = InetAddress.getLocalHost();//获取本地IP对象
@@ -37,10 +37,8 @@ public class IpConfigUtils {
             //把字符串所有小写字母改为大写成为正规的mac地址并返回
             return sb.toString().toUpperCase();
         }catch (Exception e){
-            log.error("获取Mac地址失败");
-            e.getMessage();
+            throw new Exception("获取Mac地址失败原因："+e.getMessage());
         }
-        return null;
     }
 
 
