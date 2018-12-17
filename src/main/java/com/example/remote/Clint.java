@@ -22,7 +22,6 @@ import java.util.concurrent.*;
  * 客户端
  */
 @Slf4j
-@Component
 @Configuration
 @EnableScheduling
 @EnableAsync
@@ -173,8 +172,8 @@ public class Clint {
                 //实例化ExecuteCommand对象
                 if(jarDownloaded){
                     //TODO  需要释放注释
-//                    executeCommand = (ExecuteCommand) FileUtil.loadObjectFromJar(commandJson.getString("jarPath"),commandJson.getString("classPath"));
-                    executeCommand = new TestCommand();
+                    executeCommand = (ExecuteCommand) FileUtil.loadObjectFromJar(commandJson.getString("jarPath"),commandJson.getString("classPath"));
+//                    executeCommand = new TestCommand();
                 }else{
                     log.info("下载jar包失败");
                     return false;
@@ -189,11 +188,13 @@ public class Clint {
                     //安装更新包
                     executeCommand.installApp(commandJson);
                     //打开程序
-                    executeCommand.openApp(commandJson);
+                    boolean isOpenApped = executeCommand.openApp(commandJson);
                     //执行命令
-                    executeCommand.execute(commandJson);
-                    //通知服务器
-                    executeCommand.noticeServer(commandJson);
+                    boolean isExecuted = executeCommand.execute(commandJson);
+                    //通知服务器(如果打开程序和执行程序都成功)
+                    if (isOpenApped && isExecuted){
+                        executeCommand.noticeServer(commandJson);
+                    }
                     return true;
                 }else {
                     log.info("ExecuteCommand对象为空");

@@ -51,13 +51,13 @@ public class FileUtilTest {
 //    }
 //
 //
-//    @Test
-//    public void loadObjectTest(){
-//
-//        ExecuteCommand executeCommand = (ExecuteCommand) FileUtil.loadObjectFromJar("F:/ykt_test/testcommond.jar","com.example.remote.interfimpl.TestCommand");
-//
-////        executeCommand.closeApp("");
-//    }
+    @Test
+    public void loadObjectTest() throws Exception {
+
+        ExecuteCommand executeCommand = (ExecuteCommand) FileUtil.loadObjectFromJar("F:\\Projects\\Test\\MethodTest\\src\\main\\resources\\static\\V2Command.jar","com.example.remote.interfimpl.V2Command");
+
+//        executeCommand.closeApp("");
+    }
 //
 //
 //    @Test
@@ -74,12 +74,12 @@ public class FileUtilTest {
 //        FileUtil.copyFile(srcFile,destFile);
 //    }
 //
-//    @Test
-//    public void getFileMD5CodeTest(){
-//        String filePath = "F:\\Projects\\Test\\MethodTest\\src\\main\\resources\\static\\v2.zip";
-////        log.info("MD5:"+FileUtil.getFileMD5Code(filePath));
-//
-//    }
+    @Test
+    public void getFileMD5CodeTest() throws Exception {
+        String filePath = "F:\\Projects\\Test\\MethodTest\\src\\main\\resources\\static\\2.0.zip";
+        log.info("MD5:"+FileUtil.getFileMD5Code(filePath));
+
+    }
 //
 //    @Test
 //    public void unZipTest(){

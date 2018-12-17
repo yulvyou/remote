@@ -98,7 +98,7 @@ public class TestCommand implements ExecuteCommand {
     }
 
     @Override
-    public boolean openApp(JSONObject commandJson) {
+    public boolean openApp(JSONObject commandJson) throws Exception {
 
         try {
             //1、运行测试文件，若成功则将配置文件config.json中的“isSuccessInstall”字段改为true
@@ -126,13 +126,10 @@ public class TestCommand implements ExecuteCommand {
                 //将detail字段的内容写入config.json文件中
                 FileUtil.writeJsonToFile(commandJson.getString("rootPath")+"/config.json",commandJson.getString("detail"));
             }
-
+            return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new Exception("重启程序失败，原因："+e.getMessage());
         }
-
-
-        return true;
     }
 
     @Override
@@ -154,4 +151,6 @@ public class TestCommand implements ExecuteCommand {
         }
 
     }
+
+
 }
